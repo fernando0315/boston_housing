@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import visuals as vs
-#from sklearn.cross_validation
+from sklearn.cross_validation
 
 data = pd.read_csv('housing.csv')
 prices = data['MEDV']
@@ -33,7 +33,7 @@ print "Mean price: ${:,.2f}".format(mean_price)
 print "Median price ${:,.2f}".format(median_price)
 print "Standard deviation of prices: ${:,.2f}".format(std_price)
 
-#Checking Data
+#Plot data (Prices vs RM, LSTAT & PTRATIO)
 import matplotlib.pyplot as plt
 for col in features.columns:
 
@@ -47,3 +47,47 @@ for col in features.columns:
     plt.ylabel('PRICES') # label here
 
 plt.show()
+
+#Developing a Model
+# TODO: Import 'r2_score'
+from sklearn.metrics import r2_score
+
+def performance_metric(y_true, y_predict):
+    """ Calculates and returns the performance score between 
+        true and predicted values based on the metric chosen. """
+    
+    # TODO: Calculate the performance score between 'y_true' and 'y_predict'
+    score = r2_score(y_true, y_predict)
+    print score
+    # Return the score
+    return score
+
+# TODO: Shuffle and split the data into training and testing subsets
+X_train, X_test, y_train, y_test = train_test_split(features, prices, test_size=0.2, random_state=0)
+
+# Success
+print "Training and testing split was successful."
+
+# Produce learning curves for varying training set sizes and maximum depths
+vs.ModelLearning(features, prices)
+
+#Last looking for next neighbours value
+from sklearn.neighbors import NearestNeighbors
+num_neighbors=5
+def nearest_neighbor_price(x):
+    def find_nearest_neighbor_indexes(x, X):  # x is your vector and X is the data set.
+        neigh = NearestNeighbors( num_neighbors )
+        neigh.fit(X)
+        distance, indexes = neigh.kneighbors( x )
+        return indexes
+    indexes = find_nearest_neighbor_indexes(x, features)
+    sum_prices = []
+    for i in indexes:
+        sum_prices.append(prices[i])
+    neighbor_avg = np.mean(sum_prices)
+    return neighbor_avg
+index = 0  
+for i in client_data:
+    val=nearest_neighbor_price(i)
+    index += 1
+    print "The predicted {} nearest neighbors price for home {} is: ${:,.2f}".format(num_neighbors,index, val)
