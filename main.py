@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import visuals as vs
-from sklearn.cross_validation
+from sklearn.cross_validation import ShuffleSplit
 
 data = pd.read_csv('housing.csv')
 prices = data['MEDV']
@@ -62,6 +62,13 @@ def performance_metric(y_true, y_predict):
     # Return the score
     return score
 
+# Calculate the performance of this model
+score = performance_metric([3, -0.5, 2, 7, 4.2], [2.5, 0.0, 2.1, 7.8, 5.3])
+print "Model has a coefficient of determination, R^2, of {:.3f}.".format(score)
+
+# TODO: Import 'train_test_split'
+from  sklearn.cross_validation import train_test_split
+
 # TODO: Shuffle and split the data into training and testing subsets
 X_train, X_test, y_train, y_test = train_test_split(features, prices, test_size=0.2, random_state=0)
 
@@ -70,6 +77,54 @@ print "Training and testing split was successful."
 
 # Produce learning curves for varying training set sizes and maximum depths
 vs.ModelLearning(features, prices)
+vs.ModelComplexity(X_train, y_train)
+
+# TODO: Import 'make_scorer', 'DecisionTreeRegressor', and 'GridSearchCV'
+from sklearn.tree import DecisionTreeRegressor
+from sklearn.metrics import make_scorer
+from sklearn.grid_search import GridSearchCV
+
+def fit_model(X, y):
+    """ Performs grid search over the 'max_depth' parameter for a 
+        decision tree regressor trained on the input data [X, y]. """
+    
+    # Create cross-validation sets from the training data
+    cv_sets = ShuffleSplit(X.shape[0], n_iter = 10, test_size = 0.20, random_state = 0)
+
+    # TODO: Create a decision tree regressor object
+    regressor = DecisionTreeRegressor()
+
+    # TODO: Create a dictionary for the parameter 'max_depth' with a range from 1 to 10
+    params = {'max_depth':range(1,11)}
+
+    # TODO: Transform 'performance_metric' into a scoring function using 'make_scorer' 
+    scoring_fnc = make_scorer(performance_metric)
+
+    # TODO: Create the grid search object
+    grid = GridSearchCV(regressor, params, scoring_fnc, cv=cv_sets)
+
+    # Fit the grid search object to the data to compute the optimal model
+    grid = grid.fit(X, y)
+
+    # Return the optimal model after fitting the data
+    return grid.best_estimator_
+
+# Fit the training data to the model using grid search
+reg = fit_model(X_train, y_train)
+
+# Produce the value for 'max_depth'
+print "Parameter 'max_depth' is {} for the optimal model.".format(reg.get_params()['max_depth'])
+
+# Produce a matrix for client data
+client_data = [[5, 17, 15], # Client 1
+               [4, 32, 22], # Client 2
+               [8, 3, 12]]  # Client 3
+
+# Show predictions
+for i, price in enumerate(reg.predict(client_data)):
+    print "Predicted selling price for Client {}'s home: ${:,.2f}".format(i+1, price)
+
+vs.PredictTrials(features, prices, fit_model, client_data)
 
 #Last looking for next neighbours value
 from sklearn.neighbors import NearestNeighbors
@@ -86,8 +141,10 @@ def nearest_neighbor_price(x):
         sum_prices.append(prices[i])
     neighbor_avg = np.mean(sum_prices)
     return neighbor_avg
+
 index = 0  
 for i in client_data:
     val=nearest_neighbor_price(i)
     index += 1
     print "The predicted {} nearest neighbors price for home {} is: ${:,.2f}".format(num_neighbors,index, val)
+
